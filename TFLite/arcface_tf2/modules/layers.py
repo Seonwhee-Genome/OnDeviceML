@@ -6,6 +6,10 @@ class BatchNormalization(tf.keras.layers.BatchNormalization):
     """Make trainable=False freeze BN for real (the og version is sad).
        ref: https://github.com/zzh8829/yolov3-tf2
     """
+    def __init__(self, *args, **kwargs):
+        kwargs['fused'] = False  # 🔑 key line!
+        super().__init__(*args, **kwargs)
+        
     def call(self, x, training=False):
         if training is None:
             training = tf.constant(False)

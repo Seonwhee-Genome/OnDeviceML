@@ -14,10 +14,30 @@ from .layers import (
     BatchNormalization,
     ArcMarginPenaltyLogists
 )
+from tensorflow.keras.models import clone_model
 
 
 def _regularizer(weights_decay=5e-4):
     return tf.keras.regularizers.l2(weights_decay)
+
+
+def convert_batchnorm(layer):
+    if isinstance(layer, BatchNormalization):
+        return BatchNormalization(
+            axis=layer.axis,
+            momentum=layer.momentum,
+            epsilon=layer.epsilon,
+            center=layer.center,
+            scale=layer.scale,
+            beta_initializer=layer.beta_initializer,
+            gamma_initializer=layer.gamma_initializer,
+            moving_mean_initializer=layer.moving_mean_initializer,
+            moving_variance_initializer=layer.moving_variance_initializer,
+            fused=False,  # 👈 Set fused=False here
+            trainable=layer.trainable,
+            name=layer.name
+        )
+    return layer
 
 
 def Backbone(backbone_type='ResNet50', use_pretrain=True):
@@ -28,8 +48,10 @@ def Backbone(backbone_type='ResNet50', use_pretrain=True):
 
     def backbone(x_in):
         if backbone_type == 'ResNet50':
-            return ResNet50(input_shape=x_in.shape[1:], include_top=False,
-                            weights=weights)(x_in)
+            base_model = ResNet50(input_shape=x_in.shape[1:], include_top=False, weights=weights)
+            new_model = clone_model(base_model, clone_function=convert_batchnorm)
+            new_model.set_weights(base_model.get_weights())            
+            return new_model(x_in)
         elif backbone_type == 'MobileNetV2':
             return MobileNetV2(input_shape=x_in.shape[1:], include_top=False,
                                weights=weights)(x_in)
