@@ -22,8 +22,9 @@ def load_model_from_ckpt(load_path, save_path, sz=160, backbone='ResNet50', is_t
 def TF_Lite_Convert(saved_path, to_save_path, *ops):
     # Convert the SavedModel to TFLite
     converter = tf.lite.TFLiteConverter.from_saved_model("/home/work/Face/arcface-tf2/checkpoints2/arcface_res50_3.pb")
-    converter.experimental_enable_resource_variables = True
-    converter.target_spec.supported_ops = ops[0]
+#     converter.experimental_enable_resource_variables = True
+#     converter.target_spec.supported_ops = ops[0]
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
     tflite_model = converter.convert()
     # Save to file
     with open(to_save_path, "wb") as f:
